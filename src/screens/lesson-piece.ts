@@ -93,7 +93,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
     heartsEl.style.visibility = 'hidden';
     timerBar.style.visibility = 'hidden';
     progressRow.innerHTML = '&nbsp;';
-    cg.set({ fen: fenOf(PIECE.demoStart), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    cg.set({ lastMove: undefined, fen: fenOf(PIECE.demoStart), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
     footer.innerHTML = `<button class="primary-btn" id="go">Meet the ${PIECE.name}!</button>`;
     footer.querySelector('#go')!.addEventListener('click', stepDemo);
@@ -103,7 +103,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
   function stepDemo(): void {
     say(PIECE.moveCaption);
     let i = 0;
-    cg.set({ fen: fenOf(PIECE.demoStart), turnColor: 'white' });
+    cg.set({ lastMove: undefined, fen: fenOf(PIECE.demoStart), turnColor: 'white' });
     cg.redrawAll();
 
     function playNext(): void {
@@ -126,7 +126,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
     say(`Your turn — tap a glowing square to move the ${PIECE.name} there.`);
     footer.innerHTML = '';
     const start = randomStartSquare(dests);
-    cg.set({ fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    cg.set({ lastMove: undefined, fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     const destMap = new Map<Key, Key[]>();
     destMap.set(start as Key, dests(start));
     cg.set({
@@ -162,7 +162,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
 
     const start = randomStartSquare(dests);
     const coinSquare = reachableSquare(start, dests)!;
-    cg.set({ fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    cg.set({ lastMove: undefined, fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
     placeCoin(boardWrap, coinSquare);
 
@@ -186,7 +186,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
               } else {
                 sadMascot();
                 say(randomLine(PIECE.confusedLines));
-                cg.set({ fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+                cg.set({ lastMove: undefined, fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
                 cg.redrawAll();
                 setTimeout(armMove, 500);
               }
@@ -218,7 +218,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
     let captured = 0;
     let timeLeft = RACE_SECONDS * 10;
 
-    cg.set({ fen: fenOf(current), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    cg.set({ lastMove: undefined, fen: fenOf(current), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
 
     function finish(success: boolean): void {
