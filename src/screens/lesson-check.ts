@@ -1,6 +1,6 @@
 import { Chess } from 'chess.js';
 import type { Key } from 'chessground/types';
-import { createPieceBoard } from '../pieceboard';
+import { createPieceBoard, createRingOverlay } from '../pieceboard';
 import { CHECK_PUZZLES, validateSafetyContent } from '../safety';
 import { loadProgress, saveProgress, awardXp, awardGems, markSafetyComplete, touchStreak } from '../state';
 import { playTap, playCorrect, playLevelUp, playStreak, playGem } from '../sound';
@@ -19,6 +19,15 @@ const FEEDBACK: Record<EscapeKind, string> = {
   capture: 'Got it! You captured the attacker.',
   block: 'Smart! You blocked the attack.'
 };
+
+function findKingSquare(game: Chess, color: 'w' | 'b'): string {
+  for (const row of game.board()) {
+    for (const cell of row) {
+      if (cell && cell.type === 'k' && cell.color === color) return cell.square;
+    }
+  }
+  throw new Error('king not found on board');
+}
 
 export function renderCheckLesson(root: HTMLElement, navigate: (route: string) => void): void {
   root.innerHTML = `
@@ -42,9 +51,11 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
 
   const speech = root.querySelector('#speech') as HTMLElement;
   const mascot = root.querySelector('#mascot') as HTMLElement;
+  const boardWrap = root.querySelector('#boardWrap') as HTMLElement;
   const footer = root.querySelector('#footer') as HTMLElement;
   const progressRow = root.querySelector('#progressRow') as HTMLElement;
   const wayCards = root.querySelector('#wayCards') as HTMLElement;
+  const { ring: ringSquare, clear: clearRings } = createRingOverlay(boardWrap);
 
   root.querySelector('#back')!.addEventListener('click', () => {
     playTap();
@@ -64,12 +75,14 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
 
   function stepIntro(): void {
     say("When the King is attacked, that's called CHECK! You must get him out of danger right away.");
+    clearRings();
     cg.set({
       fen: '4rk2/8/8/8/8/8/8/4K3 w - - 0 1',
       turnColor: 'white',
       movable: { color: undefined, dests: new Map() }
     });
     cg.redrawAll();
+    ringSquare('e1', 'ring-check');
     footer.innerHTML = `<button class="primary-btn" id="go">Show me the ways out</button>`;
     footer.querySelector('#go')!.addEventListener('click', () => {
       playTap();
@@ -112,8 +125,10 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
       destMap.set(m.from as Key, list);
     }
 
+    clearRings();
     cg.set({ lastMove: undefined, fen: puzzle.fen, turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
+    ringSquare(findKingSquare(game, 'w'), 'ring-check');
 
     cg.set({
       turnColor: 'white',
@@ -127,6 +142,7 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
             const kind: EscapeKind = played.piece === 'k' ? 'move' : played.captured ? 'capture' : 'block';
             playCorrect();
             bounceMascot();
+            clearRings();
             say(FEEDBACK[kind]);
             cg.set({ movable: { color: undefined, dests: new Map() } });
             setTimeout(() => stepDrill(round + 1), 1000);

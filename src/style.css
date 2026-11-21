@@ -141,6 +141,17 @@ body {
 }
 .sq-ring.ring-good { border: 5px solid var(--good); }
 .sq-ring.ring-danger { border: 5px solid var(--danger); }
+.sq-ring.ring-check {
+  border: 5px solid var(--danger);
+  animation: pulse-danger 1s ease-in-out infinite;
+}
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sq-ring.ring-check { animation: none; opacity: 0.85; }
+}
 
 .coin {
   position: absolute;

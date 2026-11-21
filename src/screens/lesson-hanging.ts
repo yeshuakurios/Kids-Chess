@@ -1,6 +1,6 @@
 import { Chess } from 'chess.js';
 import type { Key } from 'chessground/types';
-import { createPieceBoard, squareToPercent } from '../pieceboard';
+import { createPieceBoard, createRingOverlay } from '../pieceboard';
 import { HANG_PUZZLES, validateSafetyContent } from '../safety';
 import { loadProgress, saveProgress, awardXp, awardGems, markSafetyComplete, touchStreak } from '../state';
 import { playTap, playCorrect, playWrong, playLevelUp, playStreak, playGem } from '../sound';
@@ -62,17 +62,7 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
     return lines[Math.floor(Math.random() * lines.length)];
   }
 
-  function clearRings(): void {
-    boardWrap.querySelectorAll<HTMLElement>('.sq-ring').forEach((el) => el.remove());
-  }
-  function ringSquare(square: string, cls: string): void {
-    const el = document.createElement('div');
-    el.className = `sq-ring ${cls}`;
-    const { left, top } = squareToPercent(square);
-    el.style.left = `${left}%`;
-    el.style.top = `${top}%`;
-    boardWrap.appendChild(el);
-  }
+  const { ring: ringSquare, clear: clearRings } = createRingOverlay(boardWrap);
 
   const cgHost = root.querySelector('#cgHost') as HTMLElement;
   const cg = createPieceBoard(cgHost);
@@ -138,6 +128,7 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
             say(randomLine(WRONG_LINES));
             setTimeout(() => {
               clearRings();
+              say("Tap the piece that's hanging!");
               cg.set({ selectable: { enabled: true } });
             }, 1100);
           }
