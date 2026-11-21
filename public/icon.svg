@@ -1,4 +1,55 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#6c3fc5"/>
-  <text x="50%" y="58%" font-size="300" text-anchor="middle" font-family="sans-serif">♞</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8457e0"/>
+      <stop offset="1" stop-color="#5a32b8"/>
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.3" cy="0.22" r="0.65">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#sheen)"/>
+
+  <!-- ground shadow -->
+  <ellipse cx="256" cy="430" rx="118" ry="22" fill="#2f1a6b" opacity="0.35"/>
+
+  <!-- rook body -->
+  <g>
+    <!-- base -->
+    <rect x="156" y="372" width="200" height="40" rx="16" fill="#fdf6e8"/>
+    <!-- body taper -->
+    <path d="M182 372 C182 300 174 250 192 196 L320 196 C338 250 330 300 330 372 Z" fill="#fdf6e8"/>
+    <!-- battlements -->
+    <g fill="#fdf6e8">
+      <rect x="176" y="150" width="34" height="50" rx="8"/>
+      <rect x="239" y="140" width="34" height="60" rx="8"/>
+      <rect x="302" y="150" width="34" height="50" rx="8"/>
+    </g>
+    <!-- shading -->
+    <path d="M192 196 C174 250 182 300 182 372 L214 372 C210 300 202 250 216 196 Z" fill="#f1e3c8"/>
+
+    <!-- blush -->
+    <ellipse cx="200" cy="300" rx="14" ry="10" fill="#ffb199" opacity="0.7"/>
+    <ellipse cx="312" cy="300" rx="14" ry="10" fill="#ffb199" opacity="0.7"/>
+
+    <!-- eyes -->
+    <g>
+      <circle cx="222" cy="272" r="22" fill="#2b2140"/>
+      <circle cx="290" cy="272" r="22" fill="#2b2140"/>
+      <circle cx="229" cy="264" r="7" fill="#ffffff"/>
+      <circle cx="297" cy="264" r="7" fill="#ffffff"/>
+    </g>
+
+    <!-- smile -->
+    <path d="M226 318 Q256 344 286 318" stroke="#2b2140" stroke-width="9" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- sparkle accents -->
+  <g fill="#ffe27a">
+    <path d="M98 150 l8 20 20 8 -20 8 -8 20 -8 -20 -20 -8 20 -8 Z"/>
+    <path d="M400 310 l6 15 15 6 -15 6 -6 15 -6 -15 -15 -6 15 -6 Z"/>
+  </g>
 </svg>
