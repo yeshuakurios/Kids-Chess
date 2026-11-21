@@ -2,6 +2,9 @@ import './style.css';
 import { renderHome } from './screens/home';
 import { renderPieceLesson } from './screens/lesson-piece';
 import { isPieceId } from './pieces';
+import { initUpdateBar } from './update-bar';
+
+initUpdateBar();
 
 const app = document.getElementById('app')!;
 

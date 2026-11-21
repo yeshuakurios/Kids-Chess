@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'prompt',
+      injectRegister: false,
       manifest: {
         id: './',
         name: 'Kids Chess',
