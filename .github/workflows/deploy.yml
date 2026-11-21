@@ -18,7 +18,14 @@ jobs:
       - run: npm ci
       - run: npm run build
       - uses: cloudflare/wrangler-action@v3
+        # Only needed once; fails (harmlessly) once the project already exists.
+        continue-on-error: true
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=kids-chess
+          command: pages project create kids-chess --production-branch=main
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=kids-chess --commit-dirty=true
