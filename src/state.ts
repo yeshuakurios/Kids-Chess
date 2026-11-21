@@ -1,4 +1,4 @@
-import type { Progress, PieceId } from './types';
+import type { Progress, PieceId, SafetyLessonId } from './types';
 import { XP_PER_RANK, RANKS } from './types';
 
 const STORAGE_KEY = 'kids-chess-progress-v1';
@@ -8,7 +8,7 @@ function todayStr(): string {
 }
 
 function defaultProgress(): Progress {
-  return { xp: 0, gems: 0, streak: 0, lastPlayedDate: null, masteredPieces: [], rankIndex: 0 };
+  return { xp: 0, gems: 0, streak: 0, lastPlayedDate: null, masteredPieces: [], completedSafety: [], rankIndex: 0 };
 }
 
 export function loadProgress(): Progress {
@@ -58,6 +58,13 @@ export function awardGems(p: Progress, amount: number): void {
 export function markMastered(p: Progress, piece: PieceId): void {
   if (!p.masteredPieces.includes(piece)) {
     p.masteredPieces.push(piece);
+    saveProgress(p);
+  }
+}
+
+export function markSafetyComplete(p: Progress, lesson: SafetyLessonId): void {
+  if (!p.completedSafety.includes(lesson)) {
+    p.completedSafety.push(lesson);
     saveProgress(p);
   }
 }

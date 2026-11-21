@@ -173,9 +173,28 @@ nothing's missing before calling any of this "done.")
 
 As of this writing: Stage 1 (Piece Academy) is **complete** for all 6
 pieces, with the skill-tree home screen, XP/rank/streak/gems, a drawn
-mascot icon, and the per-piece personality system all working. Stages 2–7
-(check/safety, checkmate patterns, tactics vision, Play Mode, opening
-sense, the ongoing daily loop) are **not started**. The visual/animation/
-sound polish pass is scoped separately in `AGENTS.md`. Cloudflare sync for
-progress persistence (item 12 above) was discussed and agreed on but not
-yet built.
+mascot icon, and the per-piece personality system all working. Stage 2
+(check & safety) is **complete**: two new skill-tree nodes under
+"Check & Safety", unlocked after all 6 pieces are mastered and gated
+sequentially. "Check!" (`src/screens/lesson-check.ts`) teaches what check
+means, shows the three ways out (move/block/capture) as cards, then drills
+6 hand-curated check positions (`src/safety.ts`, `CHECK_PUZZLES`) using
+real chess.js legal-move generation, so every tap is a real legal escape
+and the feedback names which of the three methods was used. "Free Pieces"
+(`src/screens/lesson-hanging.ts`) teaches "hanging" (attacked and
+undefended), demos one example with a ringed square, then drills 6
+hand-curated positions (`HANG_PUZZLES`) where the player taps the piece
+that's loose; wrong taps ring red and explain, right taps ring green.
+Both reuse the Piece Academy's mascot/speech-card/board layout and award
+XP/gems/streak the same way. All 12 puzzle positions were verified
+programmatically with chess.js (`isAttacked`/`inCheck`), and
+`validateSafetyContent` re-checks them at runtime so a bad future edit
+fails loudly. Verified with Playwright screenshots and a full scripted
+playthrough of every round in both lessons (dark corners: sequential
+lock/unlock state, the wrong-tap retry path). Not yet watched with the
+actual 7-year-old (design doc item 11) — do that before building Stage 3.
+Stages 3–7 (checkmate patterns, tactics vision, Play Mode, opening sense,
+the ongoing daily loop) are **not started**. The visual/animation/sound
+polish pass is scoped separately in `AGENTS.md` (still plain Unicode
+glyphs in the new lessons too — same scope). Cloudflare sync for progress
+persistence (item 12 above) was discussed and agreed on but not yet built.

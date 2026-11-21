@@ -1,6 +1,8 @@
 import './style.css';
 import { renderHome } from './screens/home';
 import { renderPieceLesson } from './screens/lesson-piece';
+import { renderCheckLesson } from './screens/lesson-check';
+import { renderHangingLesson } from './screens/lesson-hanging';
 import { isPieceId } from './pieces';
 import { initUpdateBar } from './update-bar';
 
@@ -15,9 +17,14 @@ function navigate(route: string): void {
 
 function render(): void {
   const hash = location.hash || '#/home';
-  const match = hash.match(/^#\/lesson\/([a-z]+)$/);
-  if (match && isPieceId(match[1])) {
-    renderPieceLesson(match[1], app, navigate);
+  const pieceMatch = hash.match(/^#\/lesson\/([a-z]+)$/);
+  const safetyMatch = hash.match(/^#\/safety\/(check|hanging)$/);
+  if (pieceMatch && isPieceId(pieceMatch[1])) {
+    renderPieceLesson(pieceMatch[1], app, navigate);
+  } else if (safetyMatch && safetyMatch[1] === 'check') {
+    renderCheckLesson(app, navigate);
+  } else if (safetyMatch && safetyMatch[1] === 'hanging') {
+    renderHangingLesson(app, navigate);
   } else {
     renderHome(app, navigate);
   }

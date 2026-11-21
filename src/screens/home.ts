@@ -1,4 +1,5 @@
 import { PIECES } from '../pieces';
+import { SAFETY_LESSONS } from '../safety';
 import { loadProgress, currentRankTitle, xpIntoRank } from '../state';
 import type { Progress } from '../types';
 
@@ -15,6 +16,20 @@ function nodeHtml(p: Progress, index: number): string {
       ${mastered ? '<div class="node-stamp">✓</div>' : ''}
       ${!unlocked ? '<div class="node-lock">🔒</div>' : ''}
       ${unlocked && !piece.available && !mastered ? '<div class="node-soon">coming soon</div>' : ''}
+    </div>`;
+}
+
+function safetyNodeHtml(p: Progress, index: number, allPiecesMastered: boolean): string {
+  const lesson = SAFETY_LESSONS[index];
+  const unlocked = index === 0 ? allPiecesMastered : p.completedSafety.includes(SAFETY_LESSONS[index - 1].id);
+  const done = p.completedSafety.includes(lesson.id);
+  const state = done ? 'mastered' : unlocked ? 'unlocked' : 'locked';
+  return `
+    <div class="tree-node ${state}" data-safety="${lesson.id}" data-clickable="${unlocked}" style="--piece-color:${lesson.color}">
+      <div class="node-symbol">${lesson.symbol}</div>
+      <div class="node-label">${lesson.name}</div>
+      ${done ? '<div class="node-stamp">✓</div>' : ''}
+      ${!unlocked ? '<div class="node-lock">🔒</div>' : ''}
     </div>`;
 }
 
@@ -39,13 +54,18 @@ export function renderHome(root: HTMLElement, navigate: (route: string) => void)
       <div class="skill-tree">
         ${PIECES.map((_, i) => nodeHtml(p, i)).join('')}
       </div>
+      <h1 class="path-title">Check &amp; Safety</h1>
+      <div class="skill-tree">
+        ${SAFETY_LESSONS.map((_, i) => safetyNodeHtml(p, i, p.masteredPieces.length === PIECES.length)).join('')}
+      </div>
     </div>
   `;
 
   root.querySelectorAll<HTMLElement>('.tree-node').forEach((el) => {
     el.addEventListener('click', () => {
       if (el.dataset.clickable !== 'true') return;
-      navigate(`#/lesson/${el.dataset.piece}`);
+      if (el.dataset.safety) navigate(`#/safety/${el.dataset.safety}`);
+      else navigate(`#/lesson/${el.dataset.piece}`);
     });
   });
 }

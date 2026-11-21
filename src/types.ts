@@ -12,12 +12,15 @@ export interface PieceInfo {
   available: boolean; // whether the full lesson exists yet
 }
 
+export type SafetyLessonId = 'check' | 'hanging';
+
 export interface Progress {
   xp: number;
   gems: number;
   streak: number;
   lastPlayedDate: string | null; // yyyy-mm-dd
   masteredPieces: PieceId[];
+  completedSafety: SafetyLessonId[];
   rankIndex: number;
 }
 
