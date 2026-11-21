@@ -125,10 +125,11 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
       destMap.set(m.from as Key, list);
     }
 
+    const kingSquare = findKingSquare(game, 'w');
     clearRings();
     cg.set({ lastMove: undefined, fen: puzzle.fen, turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
-    ringSquare(findKingSquare(game, 'w'), 'ring-check');
+    ringSquare(kingSquare, 'ring-check');
 
     cg.set({
       turnColor: 'white',
@@ -151,6 +152,7 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
       }
     });
     cg.redrawAll();
+    cg.selectSquare(kingSquare as Key);
   }
 
   function stepSummary(): void {

@@ -158,6 +158,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
       }
     });
     cg.redrawAll();
+    cg.selectSquare(start as Key);
   }
 
   // ---- Step 4: Coin-capture mini puzzles (graded, but reset-on-miss, no heart cost) ----
@@ -209,6 +210,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
         }
       });
       cg.redrawAll();
+      cg.selectSquare(start as Key);
     }
     armMove();
   }
@@ -277,6 +279,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
         }
       });
       cg.redrawAll();
+      cg.selectSquare(current as Key);
     }
     armMove();
 
