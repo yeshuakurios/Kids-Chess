@@ -1,4 +1,5 @@
 import { mascotArt } from '../mascots';
+import { playTap } from '../sound';
 import type { PieceId } from '../types';
 
 interface Scene {
@@ -90,15 +91,24 @@ export function renderCutscene(root: HTMLElement, piece: PieceId, start: () => v
 
   const reveal = root.querySelector<HTMLButtonElement>('#scene-reveal')!;
   const skip = root.querySelector<HTMLButtonElement>('#scene-start')!;
+  function startWithSound(): void {
+    playTap();
+    start();
+  }
+
   reveal.addEventListener('click', () => {
+    playTap();
     root.querySelector('.scene-punchline')!.textContent = scene.punchline;
     root.querySelector('.scene-art')!.classList.add('scene-revealed');
     reveal.textContent = 'Watch the moves';
     skip.hidden = true;
-    reveal.addEventListener('click', start, { once: true });
+    reveal.addEventListener('click', startWithSound, { once: true });
   }, { once: true });
-  skip.addEventListener('click', start, { once: true });
-  root.querySelector('#scene-back')!.addEventListener('click', back);
+  skip.addEventListener('click', startWithSound, { once: true });
+  root.querySelector('#scene-back')!.addEventListener('click', () => {
+    playTap();
+    back();
+  });
   root.querySelector<HTMLElement>('#scene-title')!.focus({ preventScroll: true });
 }
 

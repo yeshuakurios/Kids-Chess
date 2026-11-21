@@ -14,6 +14,7 @@ import { pieceById } from '../pieces';
 import { mascotArt } from '../mascots';
 import { renderCutscene, victoryScene } from './cutscene';
 import { loadProgress, saveProgress, awardXp, awardGems, markMastered, touchStreak } from '../state';
+import { playTap, playMove, playCapture, playWrong, playGem, playLevelUp, playStreak } from '../sound';
 
 const COIN_ROUNDS = 5;
 const RACE_SECONDS = 20;
@@ -69,7 +70,10 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
   const timerFill = root.querySelector('#timerFill') as HTMLElement;
   const heartsEl = root.querySelector('#hearts') as HTMLElement;
 
-  root.querySelector('#back')!.addEventListener('click', () => navigate('#/home'));
+  root.querySelector('#back')!.addEventListener('click', () => {
+    playTap();
+    navigate('#/home');
+  });
 
   let hearts = 3;
 
@@ -101,11 +105,15 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
     function playNext(): void {
       if (i >= PIECE.demoSequence.length) {
         footer.innerHTML = `<button class="primary-btn" id="go">Try it myself</button>`;
-        footer.querySelector('#go')!.addEventListener('click', stepExplore);
+        footer.querySelector('#go')!.addEventListener('click', () => {
+          playTap();
+          stepExplore();
+        });
         return;
       }
       const [from, to] = PIECE.demoSequence[i];
       cg.move(from as Key, to as Key);
+      playMove();
       i++;
       setTimeout(playNext, 500);
     }
@@ -129,6 +137,7 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
         free: false,
         events: {
           after: () => {
+            playMove();
             bounceMascot();
             say(`Nice! You moved the ${PIECE.name}. Let's grab some coins now.`);
             cg.set({ movable: { color: undefined, dests: new Map() } });
@@ -138,6 +147,7 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
       }
     });
     cg.redrawAll();
+    cg.selectSquare(start as Key);
   }
 
   // ---- Step 4: Coin-capture mini puzzles (graded, but reset-on-miss, no heart cost) ----
@@ -172,11 +182,13 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
             after: (_from, to) => {
               if (to === coinSquare) {
                 boardWrap.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
+                playGem();
                 bounceMascot();
                 say(randomLine(PIECE.victoryLines));
                 cg.set({ movable: { color: undefined, dests: new Map() } });
                 setTimeout(() => stepCoins(round + 1), 700);
               } else {
+                playWrong();
                 sadMascot();
                 say(randomLine(PIECE.confusedLines));
                 cg.set({ lastMove: undefined, fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
@@ -188,6 +200,7 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
         }
       });
       cg.redrawAll();
+      cg.selectSquare(start as Key);
     }
     armMove();
   }
@@ -238,6 +251,7 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
                 coins.splice(coins.indexOf(hit), 1);
                 captured++;
                 current = to;
+                playCapture();
                 bounceMascot();
                 if (coins.length === 0) {
                   say('ALL COINS GRABBED! Amazing!');
@@ -246,6 +260,7 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
                 }
                 armMove();
               } else {
+                playMove();
                 current = to;
                 armMove();
               }
@@ -254,6 +269,7 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
         }
       });
       cg.redrawAll();
+      cg.selectSquare(current as Key);
     }
     armMove();
 
@@ -278,6 +294,10 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
     markMastered(p, pieceId);
     saveProgress(p);
 
+    if (leveledUp) playLevelUp();
+    else if (grewStreak) playStreak();
+    else playGem();
+
     root.innerHTML = `
       <div class="screen summary-screen">
         ${victoryScene(pieceId, perfect)}
@@ -290,7 +310,10 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
         <button class="primary-btn" id="done">Back to the path</button>
       </div>
     `;
-    root.querySelector('#done')!.addEventListener('click', () => navigate('#/home'));
+    root.querySelector('#done')!.addEventListener('click', () => {
+      playTap();
+      navigate('#/home');
+    });
   }
 
   root.querySelector<HTMLButtonElement>('#back')!.focus({ preventScroll: true });
