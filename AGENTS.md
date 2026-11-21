@@ -9,9 +9,18 @@ Chessground (board rendering) + chess.js, no UI framework. It's live at
 
 The gameplay/pedagogy/progression logic is done and working: a skill-tree
 home screen (XP, streak, gems, rank) and a full "Piece Academy" lesson for
-the Rook (intro → movement demo → free exploration → coin-capture drill →
-timed capture race → summary). The functional MVP is solid; what's missing
-is **polish**: this file scopes that pass.
+**all six pieces** (Rook, Bishop, Knight, Queen, Pawn, King — intro → movement
+demo → free exploration → coin-capture drill → timed capture race →
+summary, one shared engine driven by each piece's real movement rules).
+A drawn mascot icon (a cute rook, `public/icon-512.png` etc.) already exists
+for the app icon itself — the per-piece in-lesson mascots are still plain
+Unicode glyphs and are what this file scopes.
+
+See `docs/design-plan.md` for the full curriculum/gamification/humor design
+this app is working toward — this file (`AGENTS.md`) only scopes the visual/
+animation/sound polish pass on what's already built. The functional MVP for
+Stage 1 (Piece Academy) is solid; what's missing is **polish**: this file
+scopes that pass.
 
 ## The ask
 
@@ -56,23 +65,33 @@ money on this. Options that fit:
 
 ## Where things live
 
-- `src/pieces.ts` — piece personalities/metadata (`PieceInfo`), including
-  `symbol` (currently a Unicode glyph — swap for real art here) and all the
-  character voice lines.
-- `src/screens/lesson-rook.ts` — the only fully-built lesson; it's the
-  reference implementation for the lesson flow. Has a `#mascot` element
-  (currently renders `ROOK.symbol` as text) and calls `bounceMascot()` /
-  `sadMascot()` at specific moments — those are the animation hook points.
+- `src/pieces.ts` — piece personalities/metadata for all 6 pieces, including
+  `symbol` (currently a Unicode glyph per piece — swap for real art here),
+  `moveCaption` (demo-step narration), `demoStart`/`demoSequence` (the
+  auto-played demo moves), and the character voice lines (tagline, idle,
+  confused, victory).
+- `src/screens/lesson-piece.ts` — the single generic lesson engine used by
+  all 6 pieces (parameterized by `pieceId`; looks up `src/pieces.ts` and
+  `src/pieceboard.ts`). Has a `#mascot` element (currently renders
+  `PIECE.symbol` as text) and calls `bounceMascot()` / `sadMascot()` at
+  specific moments — those are the animation hook points. This replaced the
+  old Rook-only `lesson-rook.ts`, which no longer exists.
 - `src/screens/home.ts` — skill-tree screen; each node shows
   `piece.symbol` too.
-- `src/rookboard.ts` — Chessground setup and the custom coin-overlay system
-  (coins are plain emoji `🪙` positioned absolutely over the board — also a
-  reasonable target for a redraw).
+- `src/pieceboard.ts` — Chessground setup, per-piece movement/destination
+  logic (sliding for rook/bishop/queen, jumps for knight/king, forward-only
+  for pawn), and the custom coin-overlay system (coins are plain emoji `🪙`
+  positioned absolutely over the board — also a reasonable target for a
+  redraw). This replaced the old Rook-only `rookboard.ts`, which no longer
+  exists.
 - `src/style.css` — all current styling and the 3 existing keyframe
   animations. `.mascot-face`, `.coin`, `.tree-node`, `.summary-screen` are
   the main visual surfaces.
-- `public/icon.svg` — current app icon, a simple colored square with a
-  Unicode knight glyph. Could use the same character art treatment.
+- `public/icon.svg` / `icon-192.png` / `icon-512.png` / `apple-touch-icon.png`
+  / `favicon-32.png` — **done**, a drawn cute-cartoon rook mascot (see
+  `vite.config.ts`'s manifest and `index.html`'s `<link>` tags for how
+  they're wired in). Don't redo this; it's a reference for the style the
+  in-lesson mascots and other art should match.
 
 ## Hard constraints — do not break these
 
@@ -93,7 +112,7 @@ money on this. Options that fit:
   licensing concerns).
 - **`cg.redrawAll()` gotcha** (already solved once, don't reintroduce it):
   Chessground's `redrawAll()` wipes the *entire* innerHTML of the element
-  it was constructed on. The coin overlay in `rookboard.ts`/`lesson-rook.ts`
+  it was constructed on. The coin overlay in `pieceboard.ts`/`lesson-piece.ts`
   is deliberately a *sibling* of Chessground's own host div (`#cgHost`
   inside `#boardWrap`), not a child of it, specifically so redraws don't
   delete the coins. Any new overlay UI (confetti, extra animations layered
@@ -101,7 +120,7 @@ money on this. Options that fit:
 - **Chessground also caches board bounds and needs `cg.redrawAll()` called
   explicitly whenever surrounding layout shifts** (see the fixed layout
   heights / `visibility: hidden` instead of `display: none` pattern already
-  in `lesson-rook.ts` for the hearts/timer rows — that was a real, subtle
+  in `lesson-piece.ts` for the hearts/timer rows — that was a real, subtle
   bug: don't reintroduce layout shifts around the board without also
   re-triggering a redraw).
 - Build/verify with `npm run build` (typecheck + Vite build) before
@@ -115,12 +134,14 @@ money on this. Options that fit:
 
 ## Suggested order of attack
 
-1. Rook mascot art first (it's the one fully-built lesson, so it's the
-   highest-leverage place to prove the new visual direction works end to
-   end before touching the other 5 pieces).
+1. Rook mascot art first — it's the icon's style reference already proved
+   out (see `public/icon-512.png`), so apply that same look to the in-lesson
+   Rook mascot before touching the other 5 pieces.
 2. Sound effects (self-contained, no art dependency, quick win).
 3. Home-screen skill-tree polish (node unlock shimmer, XP bar fill).
-4. Remaining 5 piece mascots, once the style is validated on the Rook.
+4. Remaining 5 piece mascots (Bishop, Knight, Queen, Pawn, King), once the
+   style is validated on the Rook — all 5 are already fully playable
+   lessons via `lesson-piece.ts`, just waiting on their art.
 5. Summary-screen victory sequence (confetti etc.) — this is the biggest
    "wow" moment in the current flow, worth getting right.
 
