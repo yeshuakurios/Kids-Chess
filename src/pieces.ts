@@ -1,3 +1,4 @@
+import rookMascot from './art/rook.svg';
 import type { PieceInfo, PieceId } from './types';
 
 interface PieceAcademyInfo extends PieceInfo {
@@ -14,6 +15,7 @@ export const PIECES: PieceAcademyInfo[] = [
     id: 'rook',
     name: 'Rook',
     symbol: '♜',
+    mascot: rookMascot,
     color: '#4a6fd4',
     tagline: "I don't do diagonals. I don't do zigzags. I go straight. That's it.",
     moveCaption: 'Straight lines — up, down, left, right. As far as I want!',
@@ -102,4 +104,10 @@ export function pieceById(id: string): PieceAcademyInfo | undefined {
 
 export function isPieceId(id: string): id is PieceId {
   return PIECES.some((p) => p.id === id);
+}
+
+export function pieceArt(piece: PieceInfo): string {
+  return piece.mascot
+    ? `<img class="piece-art" src="${piece.mascot}" alt="" width="64" height="64">`
+    : piece.symbol;
 }

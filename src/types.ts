@@ -4,6 +4,7 @@ export interface PieceInfo {
   id: PieceId;
   name: string;
   symbol: string;
+  mascot?: string;
   color: string;
   tagline: string;
   idleLine: string;

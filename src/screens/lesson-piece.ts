@@ -10,7 +10,7 @@ import {
   randomStartSquare,
   type DestinationsFn
 } from '../pieceboard';
-import { pieceById } from '../pieces';
+import { pieceArt, pieceById } from '../pieces';
 import { loadProgress, saveProgress, awardXp, awardGems, markMastered, touchStreak } from '../state';
 
 const COIN_ROUNDS = 5;
@@ -42,7 +42,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
         <div class="hearts" id="hearts" style="visibility:hidden;">❤️❤️❤️</div>
       </div>
       <div class="mascot-row">
-        <div class="mascot-face" id="mascot">${PIECE.symbol}</div>
+        <div class="mascot-face" id="mascot" aria-hidden="true">${pieceArt(PIECE)}</div>
       </div>
       <div class="speech-card" id="speech">Loading...</div>
       <div class="board-wrap" id="boardWrap" style="position:relative;">
