@@ -103,6 +103,7 @@ function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route:
     cg.redrawAll();
 
     function playNext(): void {
+      if (!cgHost.isConnected) return;
       if (i >= PIECE.demoSequence.length) {
         footer.innerHTML = `<button class="primary-btn" id="go">Try it myself</button>`;
         footer.querySelector('#go')!.addEventListener('click', () => {
