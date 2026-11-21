@@ -19,11 +19,13 @@ export default defineConfig({
         background_color: '#fff6e5',
         theme_color: '#6c3fc5',
         icons: [
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' }
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
         ]
       },
-      workbox: { globPatterns: ['**/*.{js,css,html,svg,json,webmanifest}'] }
+      includeAssets: ['apple-touch-icon.png', 'favicon-32.png'],
+      workbox: { globPatterns: ['**/*.{js,css,html,svg,png,json,webmanifest}'] }
     })
   ]
 });
