@@ -1,6 +1,7 @@
 import './style.css';
 import { renderHome } from './screens/home';
-import { renderLessonRook } from './screens/lesson-rook';
+import { renderPieceLesson } from './screens/lesson-piece';
+import { isPieceId } from './pieces';
 
 const app = document.getElementById('app')!;
 
@@ -11,8 +12,9 @@ function navigate(route: string): void {
 
 function render(): void {
   const hash = location.hash || '#/home';
-  if (hash.startsWith('#/lesson/rook')) {
-    renderLessonRook(app, navigate);
+  const match = hash.match(/^#\/lesson\/([a-z]+)$/);
+  if (match && isPieceId(match[1])) {
+    renderPieceLesson(match[1], app, navigate);
   } else {
     renderHome(app, navigate);
   }

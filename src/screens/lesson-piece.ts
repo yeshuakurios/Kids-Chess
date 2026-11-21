@@ -1,9 +1,18 @@
 import type { Key } from 'chessground/types';
-import { createRookBoard, fenWithRookOnly, rookDestinations, squareToPercent, coordToSquare, reachableSquare, buildReachableChain } from '../rookboard';
+import type { PieceId } from '../types';
+import {
+  createPieceBoard,
+  fenWithPieceOnly,
+  squareToPercent,
+  DESTINATIONS,
+  reachableSquare,
+  buildReachableChain,
+  randomStartSquare,
+  type DestinationsFn
+} from '../pieceboard';
 import { pieceById } from '../pieces';
 import { loadProgress, saveProgress, awardXp, awardGems, markMastered, touchStreak } from '../state';
 
-const ROOK = pieceById('rook')!;
 const COIN_ROUNDS = 5;
 const RACE_SECONDS = 20;
 const RACE_COINS = 4;
@@ -21,7 +30,11 @@ function placeCoin(boardWrap: HTMLElement, square: string): HTMLElement {
   return el;
 }
 
-export function renderLessonRook(root: HTMLElement, navigate: (route: string) => void): void {
+export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route: string) => void): void {
+  const PIECE = pieceById(pieceId)!;
+  const dests: DestinationsFn = DESTINATIONS[pieceId];
+  const fenOf = (square: string) => fenWithPieceOnly(pieceId, square);
+
   root.innerHTML = `
     <div class="screen lesson-screen">
       <div class="lesson-header">
@@ -29,7 +42,7 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
         <div class="hearts" id="hearts" style="visibility:hidden;">❤️❤️❤️</div>
       </div>
       <div class="mascot-row">
-        <div class="mascot-face" id="mascot">${ROOK.symbol}</div>
+        <div class="mascot-face" id="mascot">${PIECE.symbol}</div>
       </div>
       <div class="speech-card" id="speech">Loading...</div>
       <div class="board-wrap" id="boardWrap" style="position:relative;">
@@ -55,10 +68,6 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
   root.querySelector('#back')!.addEventListener('click', () => navigate('#/home'));
 
   let hearts = 3;
-  function loseHeart(): void {
-    hearts = Math.max(0, hearts - 1);
-    heartsEl.textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3 - hearts);
-  }
 
   function bounceMascot(): void {
     mascot.classList.remove('bounce');
@@ -76,38 +85,34 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
   }
 
   const cgHost = root.querySelector('#cgHost') as HTMLElement;
-  const cg = createRookBoard(cgHost);
+  const cg = createPieceBoard(cgHost);
 
   // ---- Step 1: Intro ----
   function stepIntro(): void {
-    say(ROOK.tagline);
+    say(PIECE.tagline);
     heartsEl.style.visibility = 'hidden';
     timerBar.style.visibility = 'hidden';
     progressRow.innerHTML = '&nbsp;';
-    cg.set({ fen: fenWithRookOnly('d4'), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    cg.set({ fen: fenOf(PIECE.demoStart), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
-    footer.innerHTML = `<button class="primary-btn" id="go">Meet the Rook!</button>`;
+    footer.innerHTML = `<button class="primary-btn" id="go">Meet the ${PIECE.name}!</button>`;
     footer.querySelector('#go')!.addEventListener('click', stepDemo);
   }
 
   // ---- Step 2: Movement demo ----
   function stepDemo(): void {
-    say('Straight lines — up, down, left, right. As far as I want!');
-    let seq: [string, string][] = [['d4', 'd7'], ['d7', 'd4'], ['d4', 'a4'], ['a4', 'd4']];
+    say(PIECE.moveCaption);
     let i = 0;
-    cg.set({ fen: fenWithRookOnly('d4'), turnColor: 'white' });
-    const dests = new Map<Key, Key[]>();
-    dests.set('d4' as Key, rookDestinations('d4'));
-    cg.set({ turnColor: 'white', movable: { color: 'white', dests, free: false } });
+    cg.set({ fen: fenOf(PIECE.demoStart), turnColor: 'white' });
     cg.redrawAll();
 
     function playNext(): void {
-      if (i >= seq.length) {
+      if (i >= PIECE.demoSequence.length) {
         footer.innerHTML = `<button class="primary-btn" id="go">Try it myself</button>`;
         footer.querySelector('#go')!.addEventListener('click', stepExplore);
         return;
       }
-      const [from, to] = seq[i];
+      const [from, to] = PIECE.demoSequence[i];
       cg.move(from as Key, to as Key);
       i++;
       setTimeout(playNext, 500);
@@ -118,24 +123,24 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
 
   // ---- Step 3: Free exploration (no penalty) ----
   function stepExplore(): void {
-    say('Your turn — tap a glowing square to move the Rook there.');
+    say(`Your turn — tap a glowing square to move the ${PIECE.name} there.`);
     footer.innerHTML = '';
-    const start = 'd4';
-    cg.set({ fen: fenWithRookOnly(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
-    const dests = new Map<Key, Key[]>();
-    dests.set(start as Key, rookDestinations(start));
+    const start = randomStartSquare(dests);
+    cg.set({ fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    const destMap = new Map<Key, Key[]>();
+    destMap.set(start as Key, dests(start));
     cg.set({
       turnColor: 'white',
       movable: {
         color: 'white',
-        dests,
+        dests: destMap,
         free: false,
         events: {
           after: () => {
             bounceMascot();
-            say('Nice! You moved the Rook. Let\'s grab some coins now.');
+            say(`Nice! You moved the ${PIECE.name}. Let's grab some coins now.`);
             cg.set({ movable: { color: undefined, dests: new Map() } });
-            setTimeout(stepCoins, 1100);
+            setTimeout(() => stepCoins(1), 1100);
           }
         }
       }
@@ -144,7 +149,7 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
   }
 
   // ---- Step 4: Coin-capture mini puzzles (graded, but reset-on-miss, no heart cost) ----
-  function stepCoins(round = 1): void {
+  function stepCoins(round: number): void {
     if (round > COIN_ROUNDS) {
       stepRace();
       return;
@@ -155,33 +160,33 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
     progressRow.textContent = `🪙 ${round - 1} / ${COIN_ROUNDS}`;
     footer.innerHTML = '';
 
-    const start = coordToSquare(Math.floor(Math.random() * 8), Math.floor(Math.random() * 8));
-    const coinSquare = reachableSquare(start);
-    cg.set({ fen: fenWithRookOnly(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    const start = randomStartSquare(dests);
+    const coinSquare = reachableSquare(start, dests)!;
+    cg.set({ fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
     placeCoin(boardWrap, coinSquare);
 
     function armMove(): void {
-      const dests = new Map<Key, Key[]>();
-      dests.set(start as Key, rookDestinations(start));
+      const destMap = new Map<Key, Key[]>();
+      destMap.set(start as Key, dests(start));
       cg.set({
         turnColor: 'white',
         movable: {
           color: 'white',
-          dests,
+          dests: destMap,
           free: false,
           events: {
             after: (_from, to) => {
               if (to === coinSquare) {
                 document.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
                 bounceMascot();
-                say(randomLine(ROOK.victoryLines));
+                say(randomLine(PIECE.victoryLines));
                 cg.set({ movable: { color: undefined, dests: new Map() } });
                 setTimeout(() => stepCoins(round + 1), 700);
               } else {
                 sadMascot();
-                say(randomLine(ROOK.confusedLines));
-                cg.set({ fen: fenWithRookOnly(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+                say(randomLine(PIECE.confusedLines));
+                cg.set({ fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
                 cg.redrawAll();
                 setTimeout(armMove, 500);
               }
@@ -206,13 +211,14 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
     say('Capture race! Grab every coin before time runs out!');
     footer.innerHTML = '';
 
-    let current = coordToSquare(3, 3);
-    const chain = buildReachableChain(current, RACE_COINS);
+    let current = randomStartSquare(dests);
+    const chain = buildReachableChain(current, RACE_COINS, dests);
     const coins: Coin[] = chain.map((sq) => ({ square: sq, el: placeCoin(boardWrap, sq) }));
+    const targetCount = coins.length;
     let captured = 0;
     let timeLeft = RACE_SECONDS * 10;
 
-    cg.set({ fen: fenWithRookOnly(current), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    cg.set({ fen: fenOf(current), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
 
     function finish(success: boolean): void {
@@ -223,13 +229,13 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
     }
 
     function armMove(): void {
-      const dests = new Map<Key, Key[]>();
-      dests.set(current as Key, rookDestinations(current));
+      const destMap = new Map<Key, Key[]>();
+      destMap.set(current as Key, dests(current));
       cg.set({
         turnColor: 'white',
         movable: {
           color: 'white',
-          dests,
+          dests: destMap,
           free: false,
           events: {
             after: (_from, to) => {
@@ -261,7 +267,7 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
     raceTimer = window.setInterval(() => {
       timeLeft--;
       timerFill.style.width = `${(timeLeft / (RACE_SECONDS * 10)) * 100}%`;
-      if (timeLeft <= 0) finish(captured === RACE_COINS);
+      if (timeLeft <= 0) finish(captured === targetCount);
     }, 100);
   }
 
@@ -272,13 +278,13 @@ export function renderLessonRook(root: HTMLElement, navigate: (route: string) =>
     const xpGain = 15 + coinsCaptured;
     const { leveledUp } = awardXp(p, xpGain);
     awardGems(p, 1);
-    markMastered(p, 'rook');
+    markMastered(p, pieceId);
     saveProgress(p);
 
     root.innerHTML = `
       <div class="screen summary-screen">
         <div class="confetti">${perfect ? '🎉🏰🎉' : '🏰'}</div>
-        <div class="summary-title">Rook Rank: Mastered!</div>
+        <div class="summary-title">${PIECE.name} Rank: Mastered!</div>
         <div class="summary-stat">🪙 Coins grabbed: ${coinsCaptured}</div>
         <div class="summary-stat">⭐ +${xpGain} XP</div>
         <div class="summary-stat">💎 +1 Gem</div>
