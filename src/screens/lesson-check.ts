@@ -104,7 +104,7 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
       destMap.set(m.from as Key, list);
     }
 
-    cg.set({ fen: puzzle.fen, turnColor: 'white', movable: { color: undefined, dests: new Map() } });
+    cg.set({ lastMove: undefined, fen: puzzle.fen, turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
 
     cg.set({
