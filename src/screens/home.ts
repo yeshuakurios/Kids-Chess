@@ -1,6 +1,7 @@
 import { PIECES } from '../pieces';
 import { SAFETY_LESSONS } from '../safety';
 import { loadProgress, currentRankTitle, xpIntoRank } from '../state';
+import { isMuted, toggleMuted, playTap } from '../sound';
 import type { Progress } from '../types';
 
 function nodeHtml(p: Progress, index: number): string {
@@ -43,6 +44,7 @@ export function renderHome(root: HTMLElement, navigate: (route: string) => void)
     <div class="screen home-screen">
       <div class="hud">
         <div class="hud-streak">🔥 ${p.streak}</div>
+        <button class="hud-mute" id="muteBtn" aria-label="${isMuted() ? 'Unmute sound' : 'Mute sound'}">${isMuted() ? '🔇' : '🔊'}</button>
         <div class="hud-gems">💎 ${p.gems}</div>
       </div>
       <div class="rank-card">
@@ -64,8 +66,17 @@ export function renderHome(root: HTMLElement, navigate: (route: string) => void)
   root.querySelectorAll<HTMLElement>('.tree-node').forEach((el) => {
     el.addEventListener('click', () => {
       if (el.dataset.clickable !== 'true') return;
+      playTap();
       if (el.dataset.safety) navigate(`#/safety/${el.dataset.safety}`);
       else navigate(`#/lesson/${el.dataset.piece}`);
     });
+  });
+
+  const muteBtn = root.querySelector('#muteBtn') as HTMLElement;
+  muteBtn.addEventListener('click', () => {
+    const nowMuted = toggleMuted();
+    muteBtn.textContent = nowMuted ? '🔇' : '🔊';
+    muteBtn.setAttribute('aria-label', nowMuted ? 'Unmute sound' : 'Mute sound');
+    if (!nowMuted) playTap();
   });
 }

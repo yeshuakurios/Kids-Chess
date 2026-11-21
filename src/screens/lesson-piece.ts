@@ -12,6 +12,7 @@ import {
 } from '../pieceboard';
 import { pieceById } from '../pieces';
 import { loadProgress, saveProgress, awardXp, awardGems, markMastered, touchStreak } from '../state';
+import { playTap, playMove, playCapture, playWrong, playGem, playLevelUp, playStreak } from '../sound';
 
 const COIN_ROUNDS = 5;
 const RACE_SECONDS = 20;
@@ -65,7 +66,10 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
   const timerFill = root.querySelector('#timerFill') as HTMLElement;
   const heartsEl = root.querySelector('#hearts') as HTMLElement;
 
-  root.querySelector('#back')!.addEventListener('click', () => navigate('#/home'));
+  root.querySelector('#back')!.addEventListener('click', () => {
+    playTap();
+    navigate('#/home');
+  });
 
   let hearts = 3;
 
@@ -96,7 +100,10 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
     cg.set({ lastMove: undefined, fen: fenOf(PIECE.demoStart), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
     cg.redrawAll();
     footer.innerHTML = `<button class="primary-btn" id="go">Meet the ${PIECE.name}!</button>`;
-    footer.querySelector('#go')!.addEventListener('click', stepDemo);
+    footer.querySelector('#go')!.addEventListener('click', () => {
+      playTap();
+      stepDemo();
+    });
   }
 
   // ---- Step 2: Movement demo ----
@@ -109,11 +116,15 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
     function playNext(): void {
       if (i >= PIECE.demoSequence.length) {
         footer.innerHTML = `<button class="primary-btn" id="go">Try it myself</button>`;
-        footer.querySelector('#go')!.addEventListener('click', stepExplore);
+        footer.querySelector('#go')!.addEventListener('click', () => {
+          playTap();
+          stepExplore();
+        });
         return;
       }
       const [from, to] = PIECE.demoSequence[i];
       cg.move(from as Key, to as Key);
+      playMove();
       i++;
       setTimeout(playNext, 500);
     }
@@ -137,6 +148,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
         free: false,
         events: {
           after: () => {
+            playMove();
             bounceMascot();
             say(`Nice! You moved the ${PIECE.name}. Let's grab some coins now.`);
             cg.set({ movable: { color: undefined, dests: new Map() } });
@@ -146,6 +158,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
       }
     });
     cg.redrawAll();
+    cg.selectSquare(start as Key);
   }
 
   // ---- Step 4: Coin-capture mini puzzles (graded, but reset-on-miss, no heart cost) ----
@@ -179,11 +192,13 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
             after: (_from, to) => {
               if (to === coinSquare) {
                 document.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
+                playGem();
                 bounceMascot();
                 say(randomLine(PIECE.victoryLines));
                 cg.set({ movable: { color: undefined, dests: new Map() } });
                 setTimeout(() => stepCoins(round + 1), 700);
               } else {
+                playWrong();
                 sadMascot();
                 say(randomLine(PIECE.confusedLines));
                 cg.set({ lastMove: undefined, fen: fenOf(start), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
@@ -195,6 +210,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
         }
       });
       cg.redrawAll();
+      cg.selectSquare(start as Key);
     }
     armMove();
   }
@@ -245,6 +261,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
                 coins.splice(coins.indexOf(hit), 1);
                 captured++;
                 current = to;
+                playCapture();
                 bounceMascot();
                 if (coins.length === 0) {
                   say('ALL COINS GRABBED! Amazing!');
@@ -253,6 +270,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
                 }
                 armMove();
               } else {
+                playMove();
                 current = to;
                 armMove();
               }
@@ -261,6 +279,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
         }
       });
       cg.redrawAll();
+      cg.selectSquare(current as Key);
     }
     armMove();
 
@@ -281,6 +300,10 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
     markMastered(p, pieceId);
     saveProgress(p);
 
+    if (leveledUp) playLevelUp();
+    else if (grewStreak) playStreak();
+    else playGem();
+
     root.innerHTML = `
       <div class="screen summary-screen">
         <div class="confetti">${perfect ? '🎉🏰🎉' : '🏰'}</div>
@@ -293,7 +316,10 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
         <button class="primary-btn" id="done">Back to the path</button>
       </div>
     `;
-    root.querySelector('#done')!.addEventListener('click', () => navigate('#/home'));
+    root.querySelector('#done')!.addEventListener('click', () => {
+      playTap();
+      navigate('#/home');
+    });
   }
 
   stepIntro();

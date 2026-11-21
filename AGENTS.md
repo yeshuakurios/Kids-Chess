@@ -36,7 +36,9 @@ a Nintendo-ish kids' title) rather than a functional prototype:
    screen transitions, XP-bar fill, skill-tree node unlock shimmer, idle
    fidgets, a proper victory sequence on the summary screen.
 3. **Sound effects**: move, capture, illegal-move, check/correct, wrong
-   answer, level-up, gem/XP gain, streak-save, button taps. None exist yet.
+   answer, level-up, gem/XP gain, streak-save, button taps. **Done** —
+   see `src/sound.ts` (short Web Audio API–synthesized tones, no shipped
+   audio files) and the "Current state" note at the end of this file.
 
 ## Style direction (confirmed with the user)
 
@@ -137,13 +139,35 @@ money on this. Options that fit:
 1. Rook mascot art first — it's the icon's style reference already proved
    out (see `public/icon-512.png`), so apply that same look to the in-lesson
    Rook mascot before touching the other 5 pieces.
-2. Sound effects (self-contained, no art dependency, quick win).
+2. ~~Sound effects~~ **Done** — see below.
 3. Home-screen skill-tree polish (node unlock shimmer, XP bar fill).
 4. Remaining 5 piece mascots (Bishop, Knight, Queen, Pawn, King), once the
    style is validated on the Rook — all 5 are already fully playable
    lessons via `lesson-piece.ts`, just waiting on their art.
 5. Summary-screen victory sequence (confetti etc.) — this is the biggest
    "wow" moment in the current flow, worth getting right.
+
+## Current state: sound effects
+
+`src/sound.ts` synthesizes every effect with raw oscillators (sine/square/
+triangle/sawtooth tones with a short attack/decay envelope) via the Web
+Audio API — zero shipped audio files, so no PWA precache entries, no
+bundle weight, no licensing to track. `playTap`/`playMove`/`playCapture`/
+`playIllegal`/`playCorrect`/`playWrong`/`playGem`/`playLevelUp`/
+`playStreak` cover the full inventory from the design doc's audio-
+inventory checklist item, wired into every button tap, move, capture,
+right/wrong answer, and summary-screen outcome across Piece Academy and
+both Stage 2 lessons (`lesson-piece.ts`, `lesson-check.ts`,
+`lesson-hanging.ts`). A mute toggle (🔊/🔇) sits in the home screen's HUD,
+persisted to `localStorage` (`kids-chess-muted-v1`); every `play*` call
+checks it first and no-ops when muted. `AudioContext` is created lazily on
+first use (inside a user-gesture handler, so it isn't blocked by
+autoplay policy) and resumed if suspended. Verified by instrumenting
+`AudioContext.prototype.createOscillator` in a Playwright test and
+confirming tones fire on each interaction and stop firing once muted —
+not yet heard by a human, so listen for anything that sounds off (especially
+whether the synthesized tones read as pleasant rather than harsh on a
+phone speaker) before considering this fully done.
 
 ## Git workflow
 

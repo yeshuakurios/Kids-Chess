@@ -139,6 +139,31 @@ export function squareToPercent(sq: string): { left: number; top: number } {
   return { left: f * 12.5, top: (7 - r) * 12.5 };
 }
 
+/**
+ * Colored ring overlays on board squares (e.g. "this piece is hanging",
+ * "this King is in check"). `boardWrap` must be the board's positioned
+ * parent, and the rings are siblings of Chessground's own host div so
+ * `cg.redrawAll()` (which wipes its own element's innerHTML) never
+ * deletes them.
+ */
+export function createRingOverlay(boardWrap: HTMLElement): {
+  ring: (square: string, cls: string) => void;
+  clear: () => void;
+} {
+  function clear(): void {
+    boardWrap.querySelectorAll<HTMLElement>('.sq-ring').forEach((el) => el.remove());
+  }
+  function ring(square: string, cls: string): void {
+    const el = document.createElement('div');
+    el.className = `sq-ring ${cls}`;
+    const { left, top } = squareToPercent(square);
+    el.style.left = `${left}%`;
+    el.style.top = `${top}%`;
+    boardWrap.appendChild(el);
+  }
+  return { ring, clear };
+}
+
 /** A square reachable in one move from `from` per `destinations`, excluding squares already used. Undefined if none remain. */
 export function reachableSquare(from: string, destinations: DestinationsFn, exclude: string[] = []): string | undefined {
   const options = destinations(from).filter((sq) => !exclude.includes(sq));
