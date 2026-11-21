@@ -11,6 +11,8 @@ import {
   type DestinationsFn
 } from '../pieceboard';
 import { pieceById } from '../pieces';
+import { mascotArt } from '../mascots';
+import { renderCutscene, victoryScene } from './cutscene';
 import { loadProgress, saveProgress, awardXp, awardGems, markMastered, touchStreak } from '../state';
 import { playTap, playMove, playCapture, playWrong, playGem, playLevelUp, playStreak } from '../sound';
 
@@ -32,6 +34,10 @@ function placeCoin(boardWrap: HTMLElement, square: string): HTMLElement {
 }
 
 export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route: string) => void): void {
+  renderCutscene(root, pieceId, () => startPieceLesson(pieceId, root, navigate), () => navigate('#/home'));
+}
+
+function startPieceLesson(pieceId: PieceId, root: HTMLElement, navigate: (route: string) => void): void {
   const PIECE = pieceById(pieceId)!;
   const dests: DestinationsFn = DESTINATIONS[pieceId];
   const fenOf = (square: string) => fenWithPieceOnly(pieceId, square);
@@ -39,11 +45,11 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
   root.innerHTML = `
     <div class="screen lesson-screen">
       <div class="lesson-header">
-        <button class="back-btn" id="back">←</button>
+        <button class="back-btn" id="back" aria-label="Back to the path">←</button>
         <div class="hearts" id="hearts" style="visibility:hidden;">❤️❤️❤️</div>
       </div>
       <div class="mascot-row">
-        <div class="mascot-face" id="mascot">${PIECE.symbol}</div>
+        <div class="mascot-face" id="mascot">${mascotArt(pieceId)}</div>
       </div>
       <div class="speech-card" id="speech">Loading...</div>
       <div class="board-wrap" id="boardWrap" style="position:relative;">
@@ -54,8 +60,6 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
       <div class="lesson-footer" id="footer"></div>
     </div>
   `;
-
-  document.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
 
   const speech = root.querySelector('#speech') as HTMLElement;
   const mascot = root.querySelector('#mascot') as HTMLElement;
@@ -90,21 +94,6 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
 
   const cgHost = root.querySelector('#cgHost') as HTMLElement;
   const cg = createPieceBoard(cgHost);
-
-  // ---- Step 1: Intro ----
-  function stepIntro(): void {
-    say(PIECE.tagline);
-    heartsEl.style.visibility = 'hidden';
-    timerBar.style.visibility = 'hidden';
-    progressRow.innerHTML = '&nbsp;';
-    cg.set({ lastMove: undefined, fen: fenOf(PIECE.demoStart), turnColor: 'white', movable: { color: undefined, dests: new Map() } });
-    cg.redrawAll();
-    footer.innerHTML = `<button class="primary-btn" id="go">Meet the ${PIECE.name}!</button>`;
-    footer.querySelector('#go')!.addEventListener('click', () => {
-      playTap();
-      stepDemo();
-    });
-  }
 
   // ---- Step 2: Movement demo ----
   function stepDemo(): void {
@@ -163,11 +152,12 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
 
   // ---- Step 4: Coin-capture mini puzzles (graded, but reset-on-miss, no heart cost) ----
   function stepCoins(round: number): void {
+    if (!cgHost.isConnected) return;
     if (round > COIN_ROUNDS) {
       stepRace();
       return;
     }
-    document.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
+    boardWrap.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
     heartsEl.style.visibility = 'hidden';
     say(`Grab the coin! (${round}/${COIN_ROUNDS})`);
     progressRow.textContent = `🪙 ${round - 1} / ${COIN_ROUNDS}`;
@@ -191,7 +181,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
           events: {
             after: (_from, to) => {
               if (to === coinSquare) {
-                document.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
+                boardWrap.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
                 playGem();
                 bounceMascot();
                 say(randomLine(PIECE.victoryLines));
@@ -218,7 +208,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
   // ---- Step 5: Timed capture race ----
   let raceTimer: number | undefined;
   function stepRace(): void {
-    document.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
+    boardWrap.querySelectorAll<HTMLElement>('.coin').forEach((c) => c.remove());
     heartsEl.style.visibility = 'visible';
     hearts = 3;
     heartsEl.textContent = '❤️❤️❤️';
@@ -284,6 +274,10 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
     armMove();
 
     raceTimer = window.setInterval(() => {
+      if (!cgHost.isConnected) {
+        clearInterval(raceTimer);
+        return;
+      }
       timeLeft--;
       timerFill.style.width = `${(timeLeft / (RACE_SECONDS * 10)) * 100}%`;
       if (timeLeft <= 0) finish(captured === targetCount);
@@ -306,7 +300,7 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
 
     root.innerHTML = `
       <div class="screen summary-screen">
-        <div class="confetti">${perfect ? '🎉🏰🎉' : '🏰'}</div>
+        ${victoryScene(pieceId, perfect)}
         <div class="summary-title">${PIECE.name} Rank: Mastered!</div>
         <div class="summary-stat">🪙 Coins grabbed: ${coinsCaptured}</div>
         <div class="summary-stat">⭐ +${xpGain} XP</div>
@@ -322,5 +316,6 @@ export function renderPieceLesson(pieceId: PieceId, root: HTMLElement, navigate:
     });
   }
 
-  stepIntro();
+  root.querySelector<HTMLButtonElement>('#back')!.focus({ preventScroll: true });
+  stepDemo();
 }
