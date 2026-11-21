@@ -3,6 +3,7 @@ import type { Key } from 'chessground/types';
 import { createPieceBoard } from '../pieceboard';
 import { CHECK_PUZZLES, validateSafetyContent } from '../safety';
 import { loadProgress, saveProgress, awardXp, awardGems, markSafetyComplete, touchStreak } from '../state';
+import { playTap, playCorrect, playLevelUp, playStreak, playGem } from '../sound';
 
 validateSafetyContent(Chess as unknown as new (fen?: string) => {
   inCheck(): boolean;
@@ -45,7 +46,10 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
   const progressRow = root.querySelector('#progressRow') as HTMLElement;
   const wayCards = root.querySelector('#wayCards') as HTMLElement;
 
-  root.querySelector('#back')!.addEventListener('click', () => navigate('#/home'));
+  root.querySelector('#back')!.addEventListener('click', () => {
+    playTap();
+    navigate('#/home');
+  });
 
   function bounceMascot(): void {
     mascot.classList.remove('bounce');
@@ -67,7 +71,10 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
     });
     cg.redrawAll();
     footer.innerHTML = `<button class="primary-btn" id="go">Show me the ways out</button>`;
-    footer.querySelector('#go')!.addEventListener('click', stepWays);
+    footer.querySelector('#go')!.addEventListener('click', () => {
+      playTap();
+      stepWays();
+    });
   }
 
   function stepWays(): void {
@@ -80,6 +87,7 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
     `;
     footer.innerHTML = `<button class="primary-btn" id="go">Let's practice!</button>`;
     footer.querySelector('#go')!.addEventListener('click', () => {
+      playTap();
       wayCards.style.display = 'none';
       stepDrill(0);
     });
@@ -117,6 +125,7 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
           after: (from, to) => {
             const played = legalMoves.find((m) => m.from === from && m.to === to)!;
             const kind: EscapeKind = played.piece === 'k' ? 'move' : played.captured ? 'capture' : 'block';
+            playCorrect();
             bounceMascot();
             say(FEEDBACK[kind]);
             cg.set({ movable: { color: undefined, dests: new Map() } });
@@ -137,6 +146,10 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
     markSafetyComplete(p, 'check');
     saveProgress(p);
 
+    if (leveledUp) playLevelUp();
+    else if (grewStreak) playStreak();
+    else playGem();
+
     root.innerHTML = `
       <div class="screen summary-screen">
         <div class="confetti">🎉🛡️🎉</div>
@@ -148,7 +161,10 @@ export function renderCheckLesson(root: HTMLElement, navigate: (route: string) =
         <button class="primary-btn" id="done">Back to the path</button>
       </div>
     `;
-    root.querySelector('#done')!.addEventListener('click', () => navigate('#/home'));
+    root.querySelector('#done')!.addEventListener('click', () => {
+      playTap();
+      navigate('#/home');
+    });
   }
 
   stepIntro();

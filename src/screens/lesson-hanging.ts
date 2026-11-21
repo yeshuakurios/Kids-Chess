@@ -3,6 +3,7 @@ import type { Key } from 'chessground/types';
 import { createPieceBoard, squareToPercent } from '../pieceboard';
 import { HANG_PUZZLES, validateSafetyContent } from '../safety';
 import { loadProgress, saveProgress, awardXp, awardGems, markSafetyComplete, touchStreak } from '../state';
+import { playTap, playCorrect, playWrong, playLevelUp, playStreak, playGem } from '../sound';
 
 validateSafetyContent(Chess as unknown as new (fen?: string) => {
   inCheck(): boolean;
@@ -41,7 +42,10 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
   const footer = root.querySelector('#footer') as HTMLElement;
   const progressRow = root.querySelector('#progressRow') as HTMLElement;
 
-  root.querySelector('#back')!.addEventListener('click', () => navigate('#/home'));
+  root.querySelector('#back')!.addEventListener('click', () => {
+    playTap();
+    navigate('#/home');
+  });
 
   function bounceMascot(): void {
     mascot.classList.remove('bounce');
@@ -83,7 +87,10 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
     });
     cg.redrawAll();
     footer.innerHTML = `<button class="primary-btn" id="go">Show me</button>`;
-    footer.querySelector('#go')!.addEventListener('click', stepDemo);
+    footer.querySelector('#go')!.addEventListener('click', () => {
+      playTap();
+      stepDemo();
+    });
   }
 
   function stepDemo(): void {
@@ -92,6 +99,7 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
     ringSquare(demo.hangingSquare, 'ring-danger');
     footer.innerHTML = `<button class="primary-btn" id="go">Your turn!</button>`;
     footer.querySelector('#go')!.addEventListener('click', () => {
+      playTap();
       clearRings();
       stepDrill(0);
     });
@@ -118,11 +126,13 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
           if (!puzzle.whiteSquares.includes(key)) return;
           cg.set({ selectable: { enabled: false } });
           if (key === puzzle.hangingSquare) {
+            playCorrect();
             bounceMascot();
             ringSquare(key, 'ring-good');
             say('Yes! That piece is hanging — great eye!');
             setTimeout(() => stepDrill(round + 1), 1100);
           } else {
+            playWrong();
             sadMascot();
             ringSquare(key, 'ring-danger');
             say(randomLine(WRONG_LINES));
@@ -145,6 +155,10 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
     markSafetyComplete(p, 'hanging');
     saveProgress(p);
 
+    if (leveledUp) playLevelUp();
+    else if (grewStreak) playStreak();
+    else playGem();
+
     root.innerHTML = `
       <div class="screen summary-screen">
         <div class="confetti">🎉🎯🎉</div>
@@ -156,7 +170,10 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
         <button class="primary-btn" id="done">Back to the path</button>
       </div>
     `;
-    root.querySelector('#done')!.addEventListener('click', () => navigate('#/home'));
+    root.querySelector('#done')!.addEventListener('click', () => {
+      playTap();
+      navigate('#/home');
+    });
   }
 
   stepIntro();
