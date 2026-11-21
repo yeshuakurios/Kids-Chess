@@ -1,4 +1,5 @@
 import { Chess } from 'chess.js';
+import { mascotArt } from '../mascots';
 import type { Key } from 'chessground/types';
 import { createPieceBoard, squareToPercent } from '../pieceboard';
 import { HANG_PUZZLES, validateSafetyContent } from '../safety';
@@ -9,7 +10,6 @@ validateSafetyContent(Chess as unknown as new (fen?: string) => {
   isAttacked(square: string, color: 'w' | 'b'): boolean;
 });
 
-const MASCOT = '🎯';
 const WRONG_LINES = [
   "That one's safe! Look again — which piece can a black piece actually grab?",
   'Not quite — check if anything of yours could rescue that piece if it got captured.',
@@ -24,7 +24,7 @@ export function renderHangingLesson(root: HTMLElement, navigate: (route: string)
         <div class="hearts" id="hearts" style="visibility:hidden;">❤️❤️❤️</div>
       </div>
       <div class="mascot-row">
-        <div class="mascot-face" id="mascot">${MASCOT}</div>
+        <div class="mascot-face" id="mascot">${mascotArt('queen')}</div>
       </div>
       <div class="speech-card" id="speech">Loading...</div>
       <div class="board-wrap" id="boardWrap" style="position:relative;">

@@ -1,4 +1,5 @@
 import { PIECES } from '../pieces';
+import { mascotArt } from '../mascots';
 import { SAFETY_LESSONS } from '../safety';
 import { loadProgress, currentRankTitle, xpIntoRank } from '../state';
 import type { Progress } from '../types';
@@ -11,7 +12,7 @@ function nodeHtml(p: Progress, index: number): string {
   const clickable = unlocked && piece.available;
   return `
     <div class="tree-node ${state}" data-piece="${piece.id}" data-clickable="${clickable}" style="--piece-color:${piece.color}">
-      <div class="node-symbol">${piece.symbol}</div>
+      <div class="node-symbol">${mascotArt(piece.id)}</div>
       <div class="node-label">${piece.name}</div>
       ${mastered ? '<div class="node-stamp">✓</div>' : ''}
       ${!unlocked ? '<div class="node-lock">🔒</div>' : ''}
